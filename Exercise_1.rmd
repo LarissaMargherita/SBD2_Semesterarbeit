@@ -19,7 +19,7 @@ We call all the libraries that we are going to use and install the packeges when
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -42,12 +42,14 @@ data_loans <- read_csv("loan_sample_9.csv")
 data <- data_loans
 ```
 
+
 # Descriptive analysis 
 ## Structure and dimensions of the data set
 
-In the first step we explore the dara and run some preliminary descriptive analytics
+In the first step we explore the data and run some preliminary descriptive analytics
 
 We start by investigating the structure of the data set.
+There are 12 numeric and 5 categorical variables in the dataset. But the numeric variable "Status" with its values "1" and "0" looks like a factor and all the characteristic variables also look like factors.
 ```{r, echo=FALSE}
 head(data)
 tail(data)
@@ -55,29 +57,25 @@ tail(data)
 str(data)
 ```
 
-```{r}
-summary(data)
-```
-annual_inc = 3rd Qu.:77000 to Max.:400000
-revol_bal = 3rd Qu.:15792 to Max.:78762
-tot_cur_bal & total_rev_hi_lim similar observation
 
 # Data quality issues 
 ## Checking for NAs
-One of the key data quality issues is missing data. In the next step, we using the apply() function to check the presence of NAs in each of the variables included in the dataset.
+
+In the next step, we using the apply() function to check the presence of NAs in each of the variables included in the dataset.
 ```{r}
 apply(data, 2, function(x) any(is.na(x)))
 ```
 
-```{r, echo=FALSE}
-overview(data) 
-```
-Zero missing values
 ```{r}
 overview <- overview(data)
 plot(overview)
 ```
-In the next step, we set character variables as factor.
+
+
+##Transform and Summerize of the variables
+
+Let's see how many categories the variables have character and summarize the variables.
+So we transform the characteristic variables in factors to count the categories and order them. 
 ```{r}
 data$grade = as.factor(data$grade)
 data$home_ownership = as.factor(data$home_ownership)
@@ -86,33 +84,116 @@ data$purpose = as.factor(data$purpose)
 data$application_type = as.factor(data$application_type)
 data$Status = as.factor(data$Status)
 
+data <- data %>%
+  select(order(sapply(., is.factor)),order(sapply(., is.numeric)))
+```
+
+```{r}
 overview <- overview(data)
 plot(overview)
 ```
-We go to check the data structure of the factor variables in the dataframe
 
-## Status of loan sample
-In the next step, we investigate our target variable. We notice that in our sample, we have 34'794 persons which did not default on their loan and we have 5'206 which did default.
-
+The Variable "purpose" (category provided by the borrower for the loan request) ha
+In most numerical variables there is a large gap between the minimum and maximum.
+For example, "loan-amnt" (amount of the loan applied for by the borrower) has a minimum of 1,000 and a maximum of 40,000, or "revol_bal" (Total credit revolving balance) from 0 to 78,762.
+The most people are graded between "B" and "C", in the grades "A" or "B" are similar number of people. The variable "grade" assigned loan grade by the financial service provider.
+The most people are in rent or has a mortgage for there home. 3,982 people are home owner.
+14,278 people from 40,000 aren't verified.
+We notice that in our sample, we have 34,794 persons which have the factor "1" on their loan and we have 5,206 with the value "0".
 ```{r}
-summary(data %>%
-  select_if(is.factor))
+summary(data)
 ```
- 
-Visualization of the level of the target variable
+
+
+## Balance of the target variable  
+
+In the next step, we investigate our target variable. We notice also before in our sample, that we have 5,206 persons which did not default on their loan and we have 34,794 which did default. 
 ```{r}
+PercTable(data$Status)
+```
+Visualization of the count by plotting a bar plot. 
+As we see the data set is highly imbalanced.
+```{r}
+ggplot(data, aes(x = Status, fill = Status)) +
+  geom_bar() +
+  ylab("Count") +
+  xlab("Status of the loan")
+```
+In the next step, we carry-out under sampling. 
+```{r}
+set.seed(7)
+data_original <- data
+data_balanced <- ovun.sample(Status ~ ., data=data, method = "under")
+data_under <- data.frame(data_balanced[["data"]])
+```
+
+Let's visualize our changed dataset. 
+```{r}
+ggplot(data_under, aes(x = Status, fill = Status)) +
+  geom_bar() +
+  ylab("Count") +
+  xlab("Status of the loan")
+```
+
 ggplot(data, aes(x = loan_amnt / 1000)) +
   geom_histogram(fill = "skyblue",
                  color = "white",
                  bins = 10) +
   facet_grid(grade ~ Status) +                 # the format here is row variable ~ column variable 
-  labs(title = "Loan histograms by status and grade",
+  labs(title = "Loan histograms by dti and total current balance",
        x = "Loan ($1,000)")
+
+Visualization of the level of the target variable
+```{r}
+numeric_variables <- names(data)[sapply(data, is.numeric)]
+
+# Erstelle ggplot für jede numerische Variable
+plots <- lapply(numeric_variables, function(var) {
+  ggplot(data, aes(x = !!rlang::sym(as.character(var)))) +
+    geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+    labs(title = paste("Distribution of", var),
+         x = var, y = "Frequency")
+})
+
+gridExtra::grid.arrange(grobs = plots, ncol = 2)
+
 ```
-ggplot(data, aes(x = data$Status)) +
-  geom_bar() +
-  labs(title = "Bar Plot of Target Variable", x = "Status", y = "Loan")
-#Stimmt x y Bezeichnung, #Is it balanced?
+
+
+
+Boxplot
+```{r}
+ggplot(data, aes(x  = loan_amnt / 1000, 
+                    y = income)) +
+  geom_boxplot(fill = "steelblue", 
+               alpha = .5) +
+  labs(title = "Income distribution by default status")
+```
+
+
+## Cheking for outliers 
+
+We provide a boxplot of the numeric variables in both the original and under-sampled dataset. 
+```{r, fig.width=20, fig.height=20}
+# Simple visualization of the full data 
+boxplot(scale(data[,1:11]), use.cols = TRUE)
+```
+```{r paged.print=FALSE}
+diagnose_outlier(data_under) 
+```
+
+Visualzation with and without the outliers. 
+We note that for the variables "annual_inc" (The self-reported annual income provided by the borrower during registration) the visualization changes considerably and there the median also tends to shift strongly.
+```{r echo=TRUE}
+data_under %>%
+  plot_outlier(diagnose_outlier(data_under) %>%
+                 filter(outliers_ratio >= 0.5) %>%          # dplyr
+                 select(variables) %>%
+                 unlist())
+```
+
+
+
 
 
 #Check distribution of the numeric variables
