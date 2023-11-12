@@ -1,41 +1,114 @@
-# We call all the libraries that we are going to use 
-#install.packages("readr")
-#install.packages("dlookr")
+---
+title: "SBD2_loan_sample_09"
+author: "xy"
+date: '2023'
+output:
+html_document:
+df_print: paged
+HTML: default
+word_document: default
+pdf_document: default
+---
 
-library(readr)
-library(dlookr)
+# Inroduction
 
-#We import the csv file "loan_sample_9.csv"
+xy
+
+
+We call all the libraries that we are going to use and install the packeges when its needed.
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer")
+
+lapply(libraries, function(x) if (!(x %in% installed.packages())) {
+  install.packages(x)
+})
+
+lapply(libraries, library, quietly = TRUE, character.only = TRUE)
+```
+
+We remove the environment and set the seed to make sure that the results gone be the same
+```{r}
+rm(list=ls())
+
+set.seed(7)
+```
+
+We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset
+```{r setup, include=FALSE, echo=FALSE}
 data_loans <- read_csv("loan_sample_9.csv")
 #We make a copy from the original dataset and we will work with the copy
 data <- data_loans
+```
 
-#We check the structure, summary and dimension of our dataset
-str(data)
-#looks fine
+# Descriptive analysis 
+## Structure and dimensions of the data set
+
+In the first step we explore the dara and run some preliminary descriptive analytics
+
+We start by investigating the structure of the data set.
+```{r, echo=FALSE}
 head(data)
-#looks fine
+tail(data)
+
+str(data)
+```
+
+```{r}
 summary(data)
-#annual_inc = 3rd Qu.:77000 to Max.:400000
-#revol_bal = 3rd Qu.:15792 to Max.:78762
-#tot_cur_bal & total_rev_hi_lim similar observation
+```
+annual_inc = 3rd Qu.:77000 to Max.:400000
+revol_bal = 3rd Qu.:15792 to Max.:78762
+tot_cur_bal & total_rev_hi_lim similar observation
+
+# Data quality issues 
+## Checking for NAs
+One of the key data quality issues is missing data. In the next step, we using the apply() function to check the presence of NAs in each of the variables included in the dataset.
+```{r}
+apply(data, 2, function(x) any(is.na(x)))
+```
+
+```{r, echo=FALSE}
 overview(data) 
-#Zero missing values
+```
+Zero missing values
+```{r}
+overview <- overview(data)
+plot(overview)
+```
+In the next step, we set character variables as factor.
+```{r}
+data$grade = as.factor(data$grade)
+data$home_ownership = as.factor(data$home_ownership)
+data$verification_status = as.factor(data$verification_status)
+data$purpose = as.factor(data$purpose)
+data$application_type = as.factor(data$application_type)
+data$Status = as.factor(data$Status)
 
-#We check numeric and categorical variables
-variable_classes <- sapply(data, class)
-total_numeric <- sum(variable_classes == "numeric")
-total_character <- sum(variable_classes == "character")
+overview <- overview(data)
+plot(overview)
+```
+We go to check the data structure of the factor variables in the dataframe
 
-cat("Total numeric variables:", total_numeric)
-cat("Total character variables:", total_character)
+## Status of loan sample
+In the next step, we investigate our target variable. We notice that in our sample, we have 34'794 persons which did not default on their loan and we have 5'206 which did default.
 
-#Summary of the variables
-summary(data)
-
-#Visualization of the level of the target variable
-#Load the ggplot2 library
-library(ggplot2)
+```{r}
+summary(data %>%
+  select_if(is.factor))
+```
+ 
+Visualization of the level of the target variable
+```{r}
+ggplot(data, aes(x = loan_amnt / 1000)) +
+  geom_histogram(fill = "skyblue",
+                 color = "white",
+                 bins = 10) +
+  facet_grid(grade ~ Status) +                 # the format here is row variable ~ column variable 
+  labs(title = "Loan histograms by status and grade",
+       x = "Loan ($1,000)")
+```
 ggplot(data, aes(x = data$Status)) +
   geom_bar() +
   labs(title = "Bar Plot of Target Variable", x = "Status", y = "Loan")
