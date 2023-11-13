@@ -19,7 +19,7 @@ We call all the libraries that we are going to use and install the packeges when
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -135,40 +135,18 @@ ggplot(data_under, aes(x = Status, fill = Status)) +
   xlab("Status of the loan")
 ```
 
-ggplot(data, aes(x = loan_amnt / 1000)) +
-  geom_histogram(fill = "skyblue",
-                 color = "white",
-                 bins = 10) +
-  facet_grid(grade ~ Status) +                 # the format here is row variable ~ column variable 
-  labs(title = "Loan histograms by dti and total current balance",
-       x = "Loan ($1,000)")
-
 Visualization of the level of the target variable
 ```{r}
-numeric_variables <- names(data)[sapply(data, is.numeric)]
-
-# Erstelle ggplot für jede numerische Variable
-plots <- lapply(numeric_variables, function(var) {
-  ggplot(data, aes(x = !!rlang::sym(as.character(var)))) +
-    geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
-    labs(title = paste("Distribution of", var),
-         x = var, y = "Frequency")
-})
-
-gridExtra::grid.arrange(grobs = plots, ncol = 2)
-
+corr_data <- cor(data[1:11])
+p_value_data <- cor_pmat(data[1:11])
+ggcorrplot(corr_data, type = "lower",
+           p.mat = p_value_data,
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("#6D9EC1", "white", "#E46726"),
+           lab = TRUE)
 ```
 
-
-
-Boxplot
-```{r}
-ggplot(data, aes(x  = loan_amnt / 1000, 
-                    y = income)) +
-  geom_boxplot(fill = "steelblue", 
-               alpha = .5) +
-  labs(title = "Income distribution by default status")
-```
 
 
 ## Cheking for outliers 
