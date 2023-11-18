@@ -2,12 +2,8 @@
 title: "SBD2_loan_sample_09"
 author: "xy"
 date: '2023'
-output:
-html_document:
+output: html_document
 df_print: paged
-HTML: default
-word_document: default
-pdf_document: default
 ---
 
 # Inroduction
@@ -19,7 +15,7 @@ We call all the libraries that we are going to use and install the packeges when
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "Boruta", "corrplot", "GGally")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -63,7 +59,7 @@ str(data)
 
 In the next step, we using the apply() function to check the presence of NAs in each of the variables included in the dataset.
 ```{r}
-apply(data, 2, function(x) any(is.na(x)))
+knitr::kable(apply(data, 2, function(x) any(is.na(x))))
 ```
 
 ```{r}
@@ -143,10 +139,9 @@ ggcorrplot(corr_data, type = "lower",
            p.mat = p_value_data,
            outline.col = "white",
            ggtheme = ggplot2::theme_gray,
-           colors = c("#6D9EC1", "white", "#E46726"),
+           colors = c("tomato2", "white", "skyblue2"),
            lab = TRUE)
 ```
-
 
 
 ## Cheking for outliers 
@@ -156,13 +151,13 @@ We provide a boxplot of the numeric variables in both the original and under-sam
 # Simple visualization of the full data 
 boxplot(scale(data[,1:11]), use.cols = TRUE)
 ```
-```{r paged.print=FALSE}
-diagnose_outlier(data_under) 
+```{r}
+knitr::kable(diagnose_outlier(data_under), caption = "Diagnose Outlier", digits = 2)
 ```
 
 Visualzation with and without the outliers. 
 We note that for the variables "annual_inc" (The self-reported annual income provided by the borrower during registration) the visualization changes considerably and there the median also tends to shift strongly.
-```{r echo=TRUE}
+```{r}
 data_under %>%
   plot_outlier(diagnose_outlier(data_under) %>%
                  filter(outliers_ratio >= 0.5) %>%          # dplyr
@@ -170,98 +165,107 @@ data_under %>%
                  unlist())
 ```
 
+### Dealing with outliers 
 
-
-
-
-#Check distribution of the numeric variables
-# Create histograms for numeric variables
-for (col in names(data)) {
-  if (is.numeric(data[[col]])) {
-    print(ggplot(data, aes(x = data[[col]])) +
-            geom_histogram(binwidth = 0.5) +
-            labs(title = paste("Histogram of", col)))
-  }
+We do winsorizing for dealing with the highest outliers.
+```{r}
+outlier <- function(x){
+    quantiles <- quantile(x, c(.05, .95))
+    x[x < quantiles[1]] <- quantiles[1]
+    x[x > quantiles[2]] <- quantiles[2]
+    x
 }
 
-#Create density plots for numeric variables
-for (col in names(data)) {
-  if (is.numeric(data[[col]])) {
-    print(ggplot(data, aes(x = data[[col]])) +
-            geom_density() +
-            labs(title = paste("Density Plot of", col)))
-  }
+data_new_under <- map_df(data_under[,-c(12:17)], outlier)
+cols <- data_under[,c(12:17)]
+data_new_under <- cbind(data_new_under, cols)
+```
+
+
+Let's check how the boxplot looks like
+```{r, fig.width=20, fig.height=20}
+boxplot(scale(data_new_under[,c(1:11)]), use.cols = TRUE)
+```
+
+```{r}
+for (i in 1:length(data_new_under[,-c(12:17)])) {
+  print(ggplot(data_new_under, aes(y = data_new_under[,i], color = Status)) + 
+          geom_boxplot() + 
+          ylab(names(data_new_under[i])) + 
+          theme(axis.title.x=element_blank(),
+                axis.text.x=element_blank(),
+                axis.ticks.x=element_blank()))
+}
+```
+
+```{r}
+for (i in 1:length(data_new_under[,-c(12:17)])) {
+  print(ggplot(data_new_under, 
+               aes(x = data_new_under[,i],
+                   fill = Status)) +
+          geom_density(alpha = 0.2) +
+          xlab(names(data_new_under[i])) +
+          ylab("Density"))
 }
 
+```
 
-#Variables contain outliers
-ggplot(data, aes(x = data$Status)) +
-  geom_bar(size = 1,
-           outlier.shape = 1, 
-           outlier.color = "black",
-           outlier.size = 3) 
-
-
-#Target value with default
-ggplot(Default, aes(x  = default, 
-                    y = status)) +
-  geom_boxplot(fill = "steelblue", 
-               alpha = .5) +
-  labs(title = "XY distribution by default status")
+```{r, echo=FALSE}
+data_new_under$Status <- as.factor(data_new_under$Status)
+boruta_output <- Boruta(Status~., data = data_new_under, doTrace=2)
+```
 
 
+Next, we extract and print the significant attributes. 
+```{r}
+boruta_signif <- getSelectedAttributes(boruta_output, withTentative = TRUE)
+print(boruta_signif)
+```
+
+Next, we visualize the results. 
+```{r, fig.width=20, fig.height=20}
+plot(boruta_output, cex.axis=.7, las=2, xlab="", main="Variable Importance") 
+```
+
+```{r}
+correlations = cor(data_new_under[-c(12:17)])
+corrplot(correlations) 
+```
+
+```{r}
+p_value_mat <- cor_pmat(data_new_under[,-c(12:17)])
+p1 <- ggcorrplot(correlations, type = "lower", p.mat = p_value_mat) 
+
+ggplotly(p1, tooltip = c("x", "y"))
+```
 
 
-######################################################
+```{r, fig.width=20, fig.height=20}
+ggpairs(data[, c("loan_amnt", "int_rate", "annual_inc", "dti", "total_acc", "total_rec_int", "tot_cur_bal")], 
+        aes(color = as.factor(data$Status)))
+```
 
 
 
-# -------------------------------- COMBINING GRAPHS ---------------------------------------#
-# Plot the distribution of salaries by rank using jittering
-# Let's also improve the graph. We are changing the labels of the Rank variable 
-# and we are adding some graph features.
-
-ggplot(Salaries, 
-       aes(x = factor(rank,
-                      labels = c("Assistant\nProfessor",
-                                 "Associate\nProfessor",
-                                 "Full\nProfessor")), 
-           y = salary, 
-           color = rank)) +
-  geom_boxplot(size = 1,                         # size of the box plot
-               outlier.shape = 1,                # shape of the outlier
-               outlier.color = "black",          # color of the outlier
-               outlier.size  = 3) +              # size of the outlier
-  geom_jitter(alpha = 0.5, 
-              width = .2) + 
-  scale_y_continuous(label = dollar) +
-  labs(title = "Academic Salary by Rank", 
-       subtitle = "9-month salary for 2008-2009",
-       x = "",
-       y = "") +
-  theme_minimal() +
-  theme(legend.position = "none") 
 
 
-# DATA VISUALIZATION V
-# Calculate the correlations between the variables 
-corr <- cor(economics[-1])
-corr
 
-# Visualization methods - full matrix 
-?corrplot
-corrplot(corr) # default method is the circle 
-corrplot(corr, method = "pie") # we can also change the method 
-corrplot(corr, method = "color")
-corrplot(corr, method = "number")
 
-#####################################################
 
-# Boxplot
-ggplot(Default, aes(x  = default, 
-                    y = income)) +
-  geom_boxplot(fill = "steelblue", 
-               alpha = .5) +
-  labs(title = "Income distribution by default status")
 
-######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
