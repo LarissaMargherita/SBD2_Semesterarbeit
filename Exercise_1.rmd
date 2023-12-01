@@ -8,10 +8,18 @@ df_print: paged
 
 # Inroduction
 
-xy
+>xy
 
 
-We call all the libraries that we are going to use and install the packeges when its needed.
+
+***
+
+
+
+## Prepare workplace
+
+### Install libraries
+
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -24,54 +32,61 @@ lapply(libraries, function(x) if (!(x %in% installed.packages())) {
 lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 ```
 
-We remove the environment and set the seed to make sure that the results gone be the same
 ```{r}
 rm(list=ls())
 
 set.seed(7)
 ```
 
-We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset
+
+### Read data
+
+> We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset
+
 ```{r setup, include=FALSE, echo=FALSE}
 data_loans <- read_csv("loan_sample_9.csv")
-#We make a copy from the original dataset and we will work with the copy
 data <- data_loans
 ```
+***
 
+## Descriptive analysis 
 
-# Descriptive analysis 
-## Structure and dimensions of the data set
+### Check the data
 
-In the first step we explore the data and run some preliminary descriptive analytics
-
-We start by investigating the structure of the data set.
+> In the first step we explore the data. We start by investigating the structure of the data set.
 There are 12 numeric and 5 categorical variables in the dataset. But the numeric variable "Status" with its values "1" and "0" looks like a factor and all the characteristic variables also look like factors.
+
 ```{r, echo=FALSE}
 head(data)
 tail(data)
-
 str(data)
 ```
+***
 
+### Data quality issues - Checking for NAs
 
-# Data quality issues 
-## Checking for NAs
+> We check the presence of NAs in each of the variables included in the dataset.
+There are no NAs values in this dataset.
 
-In the next step, we using the apply() function to check the presence of NAs in each of the variables included in the dataset.
 ```{r}
 knitr::kable(apply(data, 2, function(x) any(is.na(x))))
 ```
+***
+
+### What data types are included in the data set?
+
+> Now we have 12 numeric and 5 character variables.
 
 ```{r}
 overview <- overview(data)
 plot(overview)
 ```
+***
 
+### Transform and Summerize of the variables
 
-##Transform and Summerize of the variables
+> We transform the characteristic variables in factors to count the categories and order them.
 
-Let's see how many categories the variables have character and summarize the variables.
-So we transform the characteristic variables in factors to count the categories and order them. 
 ```{r}
 data$grade = as.factor(data$grade)
 data$home_ownership = as.factor(data$home_ownership)
@@ -88,14 +103,46 @@ data <- data %>%
 overview <- overview(data)
 plot(overview)
 ```
+***
 
-The Variable "purpose" (category provided by the borrower for the loan request) ha
-In most numerical variables there is a large gap between the minimum and maximum.
+### Summary of variables
+
+#### Nummeric Variables
+
+> In most numerical variables there is a large gap between the minimum and maximum.
 For example, "loan-amnt" (amount of the loan applied for by the borrower) has a minimum of 1,000 and a maximum of 40,000, or "revol_bal" (Total credit revolving balance) from 0 to 78,762.
-The most people are graded between "B" and "C", in the grades "A" or "B" are similar number of people. The variable "grade" assigned loan grade by the financial service provider.
-The most people are in rent or has a mortgage for there home. 3,982 people are home owner.
+
+
+#### Variable "purpose"
+
+>The Variable "purpose" (category provided by the borrower for the loan request) has many categories. They contain the name of the type of loan, except for one group. This group is labeled as "other" and contains 2,283 values.
+
+
+#### Variable "grade"
+
+> The most people are graded between "B" and "C", in the grades "A" or "B" are similar number of people. The variable "grade" assigned loan grade by the financial service provider.
+
+
+#### Variable "home_ownership"
+
+> The most people are in rent or has a mortgage for there home. 3,982 people are home owner.
 14,278 people from 40,000 aren't verified.
-We notice that in our sample, we have 34,794 persons which have the factor "1" on their loan and we have 5,206 with the value "0".
+
+
+#### Variable "verification_status"
+
+> We see that 14,278 people are not verifide from 40,000 people. 16,129 are source verifide.
+
+
+#### Variable "application_type"
+
+> Only 530 joined via App from 40,000 people in the System.
+
+
+#### Variable "Status"
+
+> We notice that in our sample, we have 34,794 persons which have the factor "1" on their loan and we have 5,206 with the value "0".
+
 ```{r}
 summary(data)
 ```
