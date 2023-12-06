@@ -396,6 +396,205 @@ plot_ly(data, x = ~loan_amnt, y = ~annual_inc, mode = "markers",
 ```
 
 
+***
+
+
+
+## Exercise 2
+
+### Training and testing a logistic classifier
+```{r}
+set.seed(7)
+div <- createDataPartition(y = data_new_under$Status, p = 0.7, list = F)
+
+# Training Sample
+data.train <- data_new_under[div,] # 70% here
+
+# Test Sample
+data.test <- data_new_under[-div,] # rest of the 30% data goes here
+```
+
+
+***
+
+
+### Training the classifier
+
+```{r}
+fit1 <- glm(Status ~ ., data=data.train,family=binomial())
+summary(fit1)
+```
+
+#### Explanation:
+
+> From the results obtained, we can deduce the following points.
+Deviance residuals:
+* The moderate range of deviance residuals (-2.08 to 2.10) suggests a reasonable fit to the model. Smaller residuals would indicate a more precise fit, but these values are acceptable.
+Coefficients:
+* Positive coefficients for "loan_amnt" and "int_rate" indicate that higher loan amounts and interest rates are associated with a higher probability of belonging to the positive class.
+Significance:
+* Statistically significant predictors include "loan_amnt," "int_rate," "annual_inc," "total_rec_int," "gradeB," and "gradeC," crucial characteristics that influence the model.
+Zero and residual deviance:
+* The reduction of deviance from null model 10103.3 to residual deviance 9254.7 suggests that the model, explains some of the variability of the response variable.
+AIC:
+* The AIC value of 9318.7 is an indicator of model fit and complexity. Although it could be lower, the AIC is still a reasonable value considering the number of predictors.
+<br>
+Conduct cross-validation to ensure generalizability of the model.
+In summary, the model shows promise with significant predictors, but there is room for improvement. Further analysis and refinement can improve its predictive capabilities and overall performance.
+
+
+***
+
+
+### Plotting the ROC Curve
+
+```{r}
+data.test$fit1_score <- predict(fit1,type='response',data.test)
+fit1_pred <- prediction(data.test$fit1_score, data.test$Status)
+fit1_roc <- performance(fit1_pred, "tpr", "fpr")
+plot(fit1_roc, lwd=1, colorize = TRUE, main = "Fit1: Logit - ROC Curve")
+lines(x=c(0, 1), y=c(0, 1), col="black", lwd=1, lty=3)
+```
+
+#### Explanation
+
+>Through the ROC (Receiver Operating Characteristic) curve, we can evaluate the performance of the classification algorithm.
+There are several aspects that we can identify and comment on.
+<br>
+The shows the relationship between the true positive rate (sensitivity) and the false positive rate (1 - specificity) for different thresholds. The true positive rate is shown on the Y-axis and the false positive rate on the X-axis.
+The diagonal line represents a random rate classifier. A good classifier is above this line, which means it achieves a higher true positive rate than false positive rate for different thresholds.
+On the right we have the color scale which represents the threshold at which the corresponding rate is reached. The red areas represent higher thresholds and the blue areas lower thresholds.
+<br>
+In our case the curve appears to be well above the diagonal, indicating a better classifier than a random guess. The color scale can be useful to see how thresholds affect evaluation metrics.
+
+
+***
+
+
+
+### visualizing the Precision/Recall Curve
+
+```{r}
+fit1_precision <- performance(fit1_pred, measure = "prec", x.measure = "rec")
+plot(fit1_precision, main="Fit1: Logit - Precision vs Recall")
+```
+
+#### Explanation:
+
+> With the precision recall curve we can evaluate the classification model used and understand whether the classes are unequally distributed or not.
+In the graph, the x and y axes are called recall and precision respectively:
+Recall (X-axis): Percentage of actual positive cases that were recognized as positive. Recall is a measure of how many of the actual positive cases the model correctly identified.
+Precision (Y-axis): Proportion of relevant instances among instances classified as positive. Precision is a measure of how many of the cases classified as positive are actually positive.
+The curve in the graph shows the trade-off between precision and recall for different thresholds. Perfect classification would produce a curve at the top right of the graph where both precision and recall are 1.
+In this case, precision starts to be high when recall is low. This means that the model is very selective when it decides to classify an instance as positive. As recall increases (the model tries to capture more true positive cases), precision decreases. This is a typical trade-off, as it is often difficult to achieve high precision and high recall at the same time.
+Since the curve is directed upwards in the right corner, it can be deduced that there is high precision and recall.
+
+
+***
+
+
+
+### Confusion Matrix
+
+```{r}
+confusionMatrix(as.factor(round(data.test$fit1_score)), data.test$Status)
+```
+
+#### Explanation:
+
+> Confusion Matrix
+* It correctly identifies 64.19% of instances (Accuracy) with 62.65% sensitivity (True Positive Rate) and 65.73% specificity (True Negative Rate).
+Kappa Statistic
+* The Kappa value of 0.2838 indicates fair agreement beyond random chance.
+Positive Predictive Value (Precision):
+* Precision is at 64.64%, meaning that when the model predicts the positive class, it is correct 64.64% of the time.
+Balanced Accuracy:
+* The balanced accuracy is 64.19%, reflecting a balance between sensitivity and specificity.
+Prevalence and Detection Rate:
+* The prevalence of the positive class is 50%, and the model detects it in 31.33% of cases.
+Mcnemar's Test
+* McNemar's test does not show a significant difference in errors between predictions.
+In conclusion, the model demonstrates moderate performance, but there is room for improvement.
+
+
+***
+
+### Computing the predictive utility of the model through the area under the curve AUC value
+
+```{r}
+fit1_auc <- performance(fit1_pred, measure = "auc")
+cat("AUC: ",fit1_auc@y.values[[1]]*100)
+```
+
+
+#### Explanation:
+
+>The AUC-Value of 70.46687 falls in to the fair discrimination range. While it suggests some ability of our model to distinguish between the two classes, there is definelty room for improvement. It could be valuable to compare our AUC-Value to that of other models to gain further context regarding our model's performance.
+
+## Exercise 3
+
+
+## Exercise 4
+
+### Question 1
+
+What challenges in making credit decisions would a company face if it were to use our model in its day-to-day business?
+These challenges are captured in the four common ethical issues in the context of creating value from data:
+
+Privacy and data security
+* Collecting and using various financial and personal variables (e.g., "loan_amnt", "int_rate", "annual_inc") for credit decisions requires a strong privacy framework for used customer data. Ensuring encryption, secure storage and compliance with privacy regulations are critical, considering the sensitive nature of financial information.
+
+Algorithmic bias and fairness
+* The model coefficients reveal that some variables, such as “grade B” and “grade C”, have a significant impact on the predictions. It is essential to carefully examine these variables for possible biases, ensuring that credit decisions are fair and impartial across different grades and demographic groups.
+
+Accountability and Accountability
+* Model performance parameters, including accuracy and sensitivity, provide a basis for evaluating its effectiveness. Establishing accountability for model results is critical, especially with significant predictors like “loan_amnt” and “int_rate.” Transparent communication about how decisions are made is essential for accountability.
+
+Impact on the workforce
+* Implementing the credit decision model may impact the workforce involved in manual credit assessments. Workforce implications, including potential job role changes, should be considered. Ethical considerations involve transparent communication about these changes and efforts to mitigate any negative impacts on the workforce.
+
+In conclusion, while the logistic regression model shows promise in predicting credit decisions, addressing ethical issues requires a comprehensive approach. Ensure rigorous data privacy measures, continually evaluate and mitigate algorithmic bias, establish accountability for model results, and consider social impact on the workforce. Engaging in ongoing ethical discussions and staying attuned to the implications of model decisions will contribute to responsible and ethical implementation in daily business operations.
+
+
+***
+
+
+### Question 2
+
+Companies can overcome or mitigate the problems and difficulties described above associated with implementing predictive models, particularly in credit decision making
+In the following way: 
+
+Data Privacy & Security: Implement Robust Security Measures
+* Employ encryption and secure storage protocols to protect sensitive data.
+Adopt anonymization and aggregation techniques to minimize the exposure of individual details.
+Ensure compliance with data protection regulations and obtain explicit consent from individuals for data usage.
+
+Algorithmic Bias & Fairness: Continuous Monitoring and Fairness Audits
+* Regularly monitor and assess model predictions for biases.
+Conduct fairness audits, particularly focusing on variables with significant impact.
+Adjust the model as needed to ensure fairness across different demographic groups.
+
+Accountability & Responsibility: Establish Clear Accountability and Transparency
+*Clearly define roles and responsibilities for individuals involved in model development and deployment.
+Maintain transparent documentation of the model's decision-making process.
+Establish mechanisms for accountability and redress in case of errors or unintended consequences.
+
+Impact on the Workforce: Responsible Workforce Management
+* Provide training and upskilling opportunities for employees affected by automation.
+Communicate transparently about changes in job roles or responsibilities.
+Consider the societal impact and contribute to initiatives that support workforce development in the face of technological advancements.
+
+By adopting these strategies, companies can navigate the ethical challenges associated with deploying predictive models for credit decisions, fostering responsible and transparent practices in their daily business operations. Regular reassessment and adaptation to evolving ethical standards and regulations are essential for continued ethical performance
+
+
+
+
+
+
+
+
+
+
 
 
 
