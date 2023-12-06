@@ -1,6 +1,6 @@
 ---
 title: "SBD2_loan_sample_09"
-author: "xy"
+author: "Ambrosioni Hélène, Sivakolunthu Nerome, Kuster Dario, Pagliarin Larissa"
 date: '2023'
 output: html_document
 df_print: paged
@@ -23,7 +23,7 @@ df_print: paged
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "Boruta", "corrplot", "GGally", "gridExtra")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "Boruta", "corrplot", "GGally", "gridExtra","caret", "ROCR")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -502,7 +502,7 @@ confusionMatrix(as.factor(round(data.test$fit1_score)), data.test$Status)
 
 #### Explanation:
 
-> Confusion Matrix
+Confusion Matrix
 * It correctly identifies 64.19% of instances (Accuracy) with 62.65% sensitivity (True Positive Rate) and 65.73% specificity (True Negative Rate).
 Kappa Statistic
 * The Kappa value of 0.2838 indicates fair agreement beyond random chance.
