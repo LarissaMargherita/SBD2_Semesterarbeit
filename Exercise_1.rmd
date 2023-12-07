@@ -18,12 +18,18 @@ df_print: paged
 
 ## Prepare workplace
 
+```{r include=FALSE, echo=FALSE}
+rm(list=ls())
+
+set.seed(7)
+```
+
 ### Install libraries
 
-```{r setup, include=FALSE, echo=FALSE}
+```{r}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "Boruta", "corrplot", "GGally", "gridExtra","caret", "ROCR")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "corrplot", "GGally", "gridExtra","caret", "ROCR")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -32,18 +38,13 @@ lapply(libraries, function(x) if (!(x %in% installed.packages())) {
 lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 ```
 
-```{r include=FALSE, echo=FALSE}
-rm(list=ls())
-
-set.seed(7)
-```
 
 
 ### Read data
 
 > We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset.
 
-```{r setup_1}
+```{r}
 data_loans <- read_csv("loan_sample_9.csv")
 data <- data_loans
 ```
@@ -199,11 +200,25 @@ ggcorrplot(corr_data, type = "lower",
            outline.col = "white",
            ggtheme = ggplot2::theme_gray,
            colors = c("tomato2", "white", "skyblue2"),
-           lab = TRUE)
+           lab = TRUE,
+           title = "Correlation matrix of the unbalanced variables")
 ```
 
+```{r, echo=FALSE}
+corr_data_under <- cor(data_under[1:11])
+p_value_data_under <- cor_pmat(data[1:11])
+ggcorrplot(corr_data_under, type = "lower",
+           p.mat = p_value_data_under,
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("tomato2", "white", "skyblue2"),
+           lab = TRUE, 
+           title = "Correlation matrix of the balanced variables")
+```
 
 ***
+
+> Balancing the data set is necessary to ensure that the model is not influenced by an excessive presence of one class over the other. Models can tend to focus on the dominant class and ignore the minority class if the data set is not balanced. Balancing ensures that both classes are equally represented, which can lead to a more balanced model.
 
 
 
@@ -293,7 +308,7 @@ data_under %>%
 
 #### Dealing with outliers 
 
-> We do winsorizing for dealing with the highest outliers.
+> We do Interquartil Range (IQR) methode for dealing with the highest outliers.
 
 ```{r}
 outlier <- function(x){
@@ -389,7 +404,7 @@ ggpairs(data[, c("loan_amnt", "int_rate", "annual_inc", "dti", "total_acc", "tot
 
 ```{r, echo=FALSE}
 plot_ly(data, x = ~loan_amnt, y = ~annual_inc, mode = "markers",
-                        type = "scatter", marker = list(color = "#00CED1")) %>%
+        type = "scatter", marker = list(color = "#00CED1", textfont = list(size = 8))) %>%
   layout(title = "Scatter Plot of Loan Amount vs. Annual Income",
          xaxis = list(title = "Loan Amount"),
          yaxis = list(title = "Annual Income"))
@@ -532,6 +547,36 @@ cat("AUC: ",fit1_auc@y.values[[1]]*100)
 >The AUC-Value of 70.46687 falls in to the fair discrimination range. While it suggests some ability of our model to distinguish between the two classes, there is definelty room for improvement. It could be valuable to compare our AUC-Value to that of other models to gain further context regarding our model's performance.
 
 ## Exercise 3
+
+### Improve pre-processing of data
+
+#### Variables
+
+> Loan utilization ratio:
+<br>
+This ratio could indicate how much of the available loan has already been used.
+
+```{r}
+summary(data$loan_amnt / data$total_rev_hi_lim)
+```
+
+> Income to loan ratio:
+<br>
+This could indicate how well the borrower is able to repay the loan, based on their income.
+
+```{r}
+summary(data$annual_inc / data$loan_amnt)
+```
+
+> Risikokategorien für den Schulden-zu-Einkommen (DTI):
+<br>
+A new categorical variable that categorizes debt-to-income (dti) into different risk categories. For example, low, medium and high risk based on certain thresholds.
+
+```{r}
+summary(cut(data$dti, breaks = c(-Inf, 15, 25, Inf), labels = c("Low Risk", "Medium Risk", "High Risk")))
+```
+
+
 
 
 ## Exercise 4
