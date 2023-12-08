@@ -111,16 +111,24 @@ plot(overview)
 #### Nummeric Variables
 
 > In most numerical variables there is a large gap between the minimum and maximum.
+<br>
 For example, "loan-amnt" (amount of the loan applied for by the borrower) has a minimum of 1,000 and a maximum of 40,000, or "revol_bal" (Total credit revolving balance) from USD 0 to USD 78,762.
-> The average interest rate "int_rate" is around 12.63%, with values between 5.31% and 27.49%.
-> The annual income "annual_inc" of borrowers varies greatly, with an average of around USD 63,277.
+<br>
+<br>
+The average interest rate "int_rate" is around 12.63%, with values between 5.31% and 27.49%.
+<br>
+<br>
+The annual income "annual_inc" of borrowers varies greatly, with an average of around USD 63,277.
+<br>d
 There are outliers with very high annual salaries.
-> There are borrowers with a dti of 0, which could indicate low indebtedness.
+<br>
+<br>
+There are borrowers with a dti of 0, which could indicate low indebtedness.
 
 
 #### Variable "purpose"
 
->The Variable "purpose" (category provided by the borrower for the loan request) has many categories. They contain the name of the type of loan, except for one group. This group is labeled as "other" and contains 2,283 values. Most loans are used for debt consolidation and credit cards.
+> The Variable "purpose" (category provided by the borrower for the loan request) has many categories. They contain the name of the type of loan, except for one group. This group is labeled as "other" and contains 2,283 values. Most loans are used for debt consolidation and credit cards.
 
 
 #### Variable "grade"
@@ -155,9 +163,10 @@ summary(data)
 
 ### Balance of the target variable  
 
-> In the next step, we investigate our target variable "Status". We notice also before in our sample, that we have 5,206 persons which did not default on their loan and we have 34,794 which did default. 
-
-> As we can see in the visualization the data set is highly imbalanced.
+> In the next step, we investigate our target variable "Status". We notice also before in our sample, that we have 5,206 persons which did not default on their loan and we have 34,794 persons which did default. 
+<br>
+<br>
+As we can see in the visualization the data set is highly imbalanced.
 
 ```{r}
 ggplot(data, aes(x = Status, fill = Status)) +
@@ -171,59 +180,14 @@ PercTable(data$Status)
 ```
 ***
 
-> In the next step, we carry-out under sampling and visualizate it again. 
 
-```{r}
-set.seed(7)
-data_original <- data
-data_balanced <- ovun.sample(Status ~ ., data=data, method = "under")
-data_under <- data.frame(data_balanced[["data"]])
-```
+### Distribution of the numeric variable
 
-```{r, echo=FALSE}
-ggplot(data_under, aes(x = Status, fill = Status)) +
-  geom_bar() +
-  ylab("Count") +
-  xlab("Status of the loan")
-```
-
-
-***
-
-> Visualization of the level of the target variable
-
-```{r, echo=FALSE}
-corr_data <- cor(data[1:11])
-p_value_data <- cor_pmat(data[1:11])
-ggcorrplot(corr_data, type = "lower",
-           p.mat = p_value_data,
-           outline.col = "white",
-           ggtheme = ggplot2::theme_gray,
-           colors = c("tomato2", "white", "skyblue2"),
-           lab = TRUE,
-           title = "Correlation matrix of the unbalanced variables")
-```
-
-```{r, echo=FALSE}
-corr_data_under <- cor(data_under[1:11])
-p_value_data_under <- cor_pmat(data[1:11])
-ggcorrplot(corr_data_under, type = "lower",
-           p.mat = p_value_data_under,
-           outline.col = "white",
-           ggtheme = ggplot2::theme_gray,
-           colors = c("tomato2", "white", "skyblue2"),
-           lab = TRUE, 
-           title = "Correlation matrix of the balanced variables")
-```
-
-***
-
-> Balancing the data set is necessary to ensure that the model is not influenced by an excessive presence of one class over the other. Models can tend to focus on the dominant class and ignore the minority class if the data set is not balanced. Balancing ensures that both classes are equally represented, which can lead to a more balanced model.
-
-
-
-### Distribution of the numeric variables
-
+> The visualizations are all skewed to the right. However, the variable "dti" is almost bell-shaped.
+<br>
+Almost all numerical variables show many outliers on the visualization. The variable with the best visibility is the variable "annual_inc". 
+<br>
+The variable "total_acc" has a moderate number of outliers, "open_acc" and "revol_util" have few outliers.
 
 ```{r fig.width=15, fig.height=5, echo=FALSE}
 
@@ -233,28 +197,29 @@ create_numeric_plots <- function(data, variable) {
   hist_plot <- ggplot(data, aes(x = !!sym(variable))) +
     geom_histogram(fill = "#00CED1", color = "white", bins = 30) +
     labs(title = paste("Distribution of", variable), x = variable, y = "Frequency") +
-    theme_minimal()
+    theme_minimal() +
+    theme(plot.title = element_text(size = 40)) 
 
   # Boxplot
   box_plot <- ggplot(data, aes(y = !!sym(variable))) +
     geom_boxplot(fill = "#00CED1", color = "black") +
     labs(title = paste("Boxplot of", variable), y = variable) +
-    theme_minimal()
+    theme_minimal() +
+    theme(plot.title = element_text(size = 40))  
 
   # Kernel Density Plot
   density_plot <- ggplot(data, aes(x = !!sym(variable))) +
     geom_density(fill = "#00CED1", color = "white") +
     labs(title = paste("Kernel Density Plot of", variable), x = variable, y = "Density") +
-    theme_minimal()
+    theme_minimal() +
+    theme(plot.title = element_text(size = 40)) 
 
   # List of Plots
   return(list(hist_plot, box_plot, density_plot))
 }
 
-
 numeric_variables <- c("loan_amnt", "int_rate", "annual_inc", "dti", "open_acc", "revol_bal",
                         "revol_util", "total_acc", "total_rec_int", "tot_cur_bal", "total_rev_hi_lim")
-
 
 for (variable in numeric_variables) {
   plots <- create_numeric_plots(data, variable)
@@ -270,7 +235,9 @@ for (variable in numeric_variables) {
 
 ### Cheking for outliers 
 
-> We provide a boxplot of the numeric variables in both the original and under-sampled dataset. 
+> Here we see the box plots next to each other on one visualization. 
+<br>
+This view confirms the results of the previous visualization. 
  
 ```{r, fig.width=20, fig.height=20, echo=FALSE}
 # Simple visualization of the full data 
@@ -281,6 +248,9 @@ boxplot(scale(data[,1:11]), use.cols = TRUE)
 
 ***
 
+> The comparison between mean values with and without outliers shows how strongly the outliers influence the average values in most variables.
+<br>
+NaN in revol_util could mean that all values of this variable were considered outliers or could be missing values. As we have already checked the variables for NA values, we can rule out the possibility that these are missing values. The distribution of this variable is very different from the other variables. The calculation of the average of the outliers could cause difficulties due to certain characteristics of the distribution, as no clear upper and lower limit for outliers can be defined.
 
 ```{r}
 knitr::kable(diagnose_outlier(data_under), caption = "Diagnose Outlier", digits = 2)
@@ -290,7 +260,11 @@ knitr::kable(diagnose_outlier(data_under), caption = "Diagnose Outlier", digits 
 
 #### Visualzation with and without the outliers. 
 
-> We note that for the variables "annual_inc" (The self-reported annual income provided by the borrower during registration) the visualization changes considerably and there the median also tends to shift strongly.
+> We note that for the variables "annual_inc", "revol_bal" and "total_rev_hi_lim" the visualization changes considerably and there the median also tends to shift.
+<br>
+The distribution of the variable "loan_amnt" would fluctuate somewhat more. 
+<br>
+The other variables would not change much.
 
 ```{r, echo=FALSE}
 data_under %>%
@@ -409,6 +383,59 @@ plot_ly(data, x = ~loan_amnt, y = ~annual_inc, mode = "markers",
          xaxis = list(title = "Loan Amount"),
          yaxis = list(title = "Annual Income"))
 ```
+
+
+***
+
+> In the next step, we carry-out under sampling and visualizate it again. 
+
+```{r}
+set.seed(7)
+data_original <- data
+data_balanced <- ovun.sample(Status ~ ., data=data, method = "under")
+data_under <- data.frame(data_balanced[["data"]])
+```
+
+```{r, echo=FALSE}
+ggplot(data_under, aes(x = Status, fill = Status)) +
+  geom_bar() +
+  ylab("Count") +
+  xlab("Status of the loan")
+```
+
+
+***
+
+> Visualization of the level of the target variable
+
+```{r, echo=FALSE}
+corr_data <- cor(data[1:11])
+p_value_data <- cor_pmat(data[1:11])
+ggcorrplot(corr_data, type = "lower",
+           p.mat = p_value_data,
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("tomato2", "white", "skyblue2"),
+           lab = TRUE,
+           title = "Correlation matrix of the unbalanced variables")
+```
+
+```{r, echo=FALSE}
+corr_data_under <- cor(data_under[1:11])
+p_value_data_under <- cor_pmat(data[1:11])
+ggcorrplot(corr_data_under, type = "lower",
+           p.mat = p_value_data_under,
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("tomato2", "white", "skyblue2"),
+           lab = TRUE, 
+           title = "Correlation matrix of the balanced variables")
+```
+
+***
+
+> Balancing the data set is necessary to ensure that the model is not influenced by an excessive presence of one class over the other. Models can tend to focus on the dominant class and ignore the minority class if the data set is not balanced. Balancing ensures that both classes are equally represented, which can lead to a more balanced model.
+
 
 
 ***
