@@ -27,7 +27,7 @@ set.seed(7)
 
 ### Install libraries
 
-```{r results='hide'}
+```{r results='hide', warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "corrplot", "GGally", "gridExtra","caret", "ROCR", "outliers")
@@ -45,7 +45,7 @@ lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 
 > We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset.
 
-```{r include=FALSE}
+```{r}
 data_loans <- read_csv("loan_sample_9.csv")
 data <- data_loans
 ```
@@ -450,9 +450,10 @@ grid.arrange(grobs = plots_list, ncol = 3)
 ## Correlations between the numerical features
 
 > **Strong positive correlations:**
-* "loan_amnt" and "total_rec_int" have a strong positive correlation of 0.69.
-* "revol_bal" and "total_rev_hi_lim" also have a strong positive correlation of 0.7.
-* "total_acc" and "open_acc" have a strong positive correlation of 0.63.
+<br>
+* Variables "loan_amnt" and "total_rec_int" have a strong positive correlation of 0.69.
+* Variables "revol_bal" and "total_rev_hi_lim" also have a strong positive correlation of 0.7.
+* Variables "total_acc" and "open_acc" have a strong positive correlation of 0.63.
 <br>
 <br>
 **"loan_amnt" and "total_rec_int"**
@@ -471,9 +472,11 @@ Therefore, also here we keep both variables.
 <br>
 **"total_acc" and "open_acc"**
 <br>
-These two values provide information on recent credit activity (number of accounts opened in the last 6 months) and total credit utilization history (total number of credit lines). A high value for the number of open trade lines in the last 6 months could indicate active credit utilization, while the total number of credit lines reflects the overall credit history. Here again, we find it important to keep the difference between the two.
+These two values provide information on recent credit activity (number of accounts opened in the last 6 months) and total credit utilization history (total number of credit lines). A high value for the number of open trade lines in the last 6 months could indicate active credit utilization, while the total number of credit lines reflects the overall credit history. 
+<br>
+Here again, we find it important to keep the difference between the two.
 
-```{r, echo=FALSE, fig.width=8, fig.height=5}
+```{r fig.width=8, fig.height=5}
 corr_data_new_under <- cor(data_new_under[,-c(12:17)])
 p_value_data_new_under <- cor_pmat(data_new_under[,-c(12:17)])
 ggcorrplot(corr_data_new_under, type = "lower",
@@ -486,25 +489,9 @@ ggcorrplot(corr_data_new_under, type = "lower",
 ```
 
 
-
-***
-
-
 ```{r, echo=FALSE}
 correlations = cor(data_new_under[-c(12:17)])
 corrplot(correlations, order= "FPC", col = COL2(n=20))
-?corrplot
-```
-
-
-
-***
-
-
-
-```{r, fig.width=20, fig.height=20}
-ggpairs(data[, c("loan_amnt", "int_rate", "annual_inc", "dti", "total_acc", "total_rec_int", "tot_cur_bal")], 
-        aes(color = as.factor(data$Status)))
 ```
 
 
@@ -514,12 +501,62 @@ ggpairs(data[, c("loan_amnt", "int_rate", "annual_inc", "dti", "total_acc", "tot
 
 ### Association between the loan amount requested and the annual income of the borrower
 
+> **Color Coding:** 
+<br>
+Light blue points represent Loan Amount, and blue points represent Annual Income.
+<br> 
+<br>
+**Scatter plot for "loan_amnt":** 
+<br>
+The red line on the plot is a regression line (trend line) between Loan Amount and Annual Income. It looks like a straight line, suggesting a linear relationship.
+<br>
+The points tend to follow the trend line closely, it indicates a strong linear relationship.
+<br>
+<br>
+**Scatter plot for "annual_inc":** 
+<br>
+The points are scattered and don't follow a clear trend, the relationship may be less predictable.
+
+
 ```{r, echo=FALSE}
-plot_ly(data, x = ~loan_amnt, y = ~annual_inc, mode = "markers",
-        type = "scatter", marker = list(color = "#00CED1", textfont = list(size = 8))) %>%
+# Scatter plot for loan_amnt
+scatter_loan_amnt <- plot_ly(data_new_under, 
+                              x = ~loan_amnt, 
+                              y = ~annual_inc, 
+                              mode = "markers",
+                              type = "scatter", 
+                              marker = list(color = "#00CED1", size = 8, opacity = 0.7),
+                              showlegend = FALSE) %>%
+  add_trace(x = ~loan_amnt, 
+            y = ~fitted(lm(annual_inc ~ loan_amnt)),
+            mode = "lines",
+            type = "scatter",
+            line = list(color = "#e74c3c"),
+            hoverinfo = "none") %>%
   layout(title = "Scatter Plot of Loan Amount vs. Annual Income",
          xaxis = list(title = "Loan Amount"),
          yaxis = list(title = "Annual Income"))
+
+# Scatter plot for annual_inc
+scatter_annual_inc <- plot_ly(data_new_under, 
+                              x = ~annual_inc, 
+                              y = ~loan_amnt, 
+                              mode = "markers",
+                              type = "scatter", 
+                              marker = list(color = "#3498db", size = 8, opacity = 0.7),
+                              showlegend = FALSE) %>%
+  add_trace(x = ~annual_inc, 
+            y = ~fitted(lm(loan_amnt ~ annual_inc)),
+            mode = "lines",
+            type = "scatter",
+            line = list(color = "#e74c3c"),
+            hoverinfo = "none") %>%
+  layout(xaxis = list(title = "Annual Income"),
+         yaxis = list(title = "Loan Amount"))
+
+# Combine the plots using subplot
+subplot(scatter_loan_amnt, scatter_annual_inc, nrows = 2)
+
 ```
 
 
