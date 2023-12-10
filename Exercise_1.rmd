@@ -162,7 +162,7 @@ summary(data)
 ```
 ***
 
-### Balance of the target variable  
+## Balance of the target variable  
 
 > In the next step, we investigate our target variable "Status". We notice also before in our sample, that we have 5,206 persons which did not default on their loan and we have 34,794 persons which did default. 
 <br>
@@ -182,7 +182,7 @@ PercTable(data$Status)
 ***
 
 
-### Distribution of the numeric variable
+## Distribution of the numeric variable
 
 > The visualizations are all skewed to the right. However, the variable "dti" is almost bell-shaped.
 <br>
@@ -234,7 +234,7 @@ for (variable in numeric_variables) {
 ***
 
 
-### Cheking for outliers 
+## Cheking for outliers 
 
 > Here we see the box plots next to each other on one visualization. 
 <br>
@@ -249,7 +249,7 @@ boxplot(scale(data[,1:11]), use.cols = TRUE)
 
 ***
 
-#### Analysis of outliers
+### Analysis of outliers
 
 > * The variable "loan_amnt" has a moderate number of outliers, which could indicate that there are loans with unusually high amounts.
 * The variable "int_rate" shows some outliers with higher interest rates, which may indicate special loan conditions.
@@ -273,7 +273,7 @@ knitr::kable(diagnose_outlier(data), caption = "Diagnose Outlier", digits = 2)
 
 
 
-#### Visualzation with and without the outliers. 
+### Visualzation with and without the outliers. 
 
 > We note that for the variables "annual_inc", "revol_bal" and "total_rev_hi_lim" the visualization changes considerably and there the median also tends to shift.
 <br>
@@ -295,7 +295,7 @@ data %>%
 
 
 
-#### Dealing with outliers 
+### Dealing with outliers 
 
 
 > The decision to use the winsorizing method was made to improve the robustness of the data and to minimize possible biases due to extremely high or low values in the target variable. The specific code section uses the quantile method to calculate the bounds for winsorizing.
@@ -331,8 +331,45 @@ knitr::kable(diagnose_outlier(data_new_under), caption = "Diagnose Outlier", dig
 ***
 
 
+## Compare "Default" and "Non-Default" groups
 
+> * *"loan_amnt":* The average loan amount for the "Default" group is slightly higher than for the "Non-Default" group.
+ * *"int_rate":* The average interest rate for the "Default" group is higher than for the "Non-Default" group.
+* *"annual_inc":* The average annual income for the "Default" group is lower compared to the "Non-Default" group.
+* *"dti":* The average ratio of debt to income is higher for the "Default" group than for the "Non-Default" group.
+* *"open_acc":* The average number of open credit lines is similar for both groups.
+* *"revol_bal":* The average revolving loan amount for the "Default" group is lower compared to the "Non-Default" group.
+* *"revol_util":* The average revolving credit utilization ratio is higher for the "Default" group than for the "Non-Default" group.
+* *"total_acc":* The average total number of credit lines is similar for both groups.
+* *"total_rec_int":* The average total interest on loans for the "Default" group is higher than for the "Non-Default" group.
+* *"tot_cur_bal":* The average total balance of current loans for the "Default" group is lower than for the "Non-Default" group.
+* *"total_rev_hi_lim":* The average total credit limit for the "Default" group is lower than for the "Non-Default" group.
 
+```{r paged.print=FALSE}
+summary_data <- data.frame()
+
+for (variable in names(data_new_under[, -c(12:17)])) {
+  
+  # mean & sd
+  mean_default <- mean(data_new_under[data_new_under$Status == 1, variable], na.rm = TRUE)
+  sd_default <- sd(data_new_under[data_new_under$Status == 1, variable], na.rm = TRUE)
+  
+  mean_non_default <- mean(data_new_under[data_new_under$Status == 0, variable], na.rm = TRUE)
+  sd_non_default <- sd(data_new_under[data_new_under$Status == 0, variable], na.rm = TRUE)
+  
+  summary_data <- rbind(summary_data, data.frame(
+    Variable = variable,
+    Mean_Default = mean_default,
+    SD_Default = sd_default,
+    Mean_Non_Default = mean_non_default,
+    SD_Non_Default = sd_non_default
+  ))
+}
+
+print(summary_data)
+```
+
+***
 
 
 ```{r, echo=FALSE}
