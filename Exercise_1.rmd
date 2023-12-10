@@ -27,7 +27,7 @@ set.seed(7)
 
 ### Install libraries
 
-```{r echo=2}
+```{r echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "corrplot", "GGally", "gridExtra","caret", "ROCR", "outliers")
@@ -345,7 +345,7 @@ knitr::kable(diagnose_outlier(data_new_under), caption = "Diagnose Outlier", dig
 * *"tot_cur_bal":* The average total balance of current loans for the "Default" group is lower than for the "Non-Default" group.
 * *"total_rev_hi_lim":* The average total credit limit for the "Default" group is lower than for the "Non-Default" group.
 
-```{r paged.print=FALSE}
+```{r}
 summary_data <- data.frame()
 
 for (variable in names(data_new_under[, -c(12:17)])) {
@@ -366,42 +366,80 @@ for (variable in names(data_new_under[, -c(12:17)])) {
   ))
 }
 
-print(summary_data)
-```
-
-***
-
-
-```{r, echo=FALSE}
-for (i in 1:length(data_new_under[,-c(12:17)])) {
-  print(ggplot(data_new_under, aes(y = data_new_under[,i], color = Status)) + 
-          geom_boxplot() + 
-          ylab(names(data_new_under[i])) + 
-          theme(axis.title.x=element_blank(),
-                axis.text.x=element_blank(),
-                axis.ticks.x=element_blank()))
-}
+knitr::kable(summary_data, caption = "Default and Non-Default Groups", digits = 2)
 ```
 
 
-***
+### Visualization
 
-
-```{r, echo=FALSE}
+```{r fig.height=20, fig.width=20}
+boxplots <- list()
 for (i in 1:length(data_new_under[,-c(12:17)])) {
-  print(ggplot(data_new_under, 
-               aes(x = data_new_under[,i],
-                   fill = Status)) +
-          geom_density(alpha = 0.2) +
-          xlab(names(data_new_under[i])) +
-          ylab("Density"))
+  boxplot <- ggplot(data_new_under, aes(y = data_new_under[,i], color = Status)) + 
+    geom_boxplot() + 
+    ylab(names(data_new_under[i])) + 
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          text = element_text(size = 40)) 
+  boxplots[[i]] <- boxplot
 }
 
+grid.arrange(grobs = boxplots, ncol = 3)
+```
+
+
+```{r fig.width=20, fig.height=20}
+density_plots <- list()
+for (i in 1:length(data_new_under[,-c(12:17)])) {
+  density_plot <- ggplot(data_new_under, 
+                         aes(x = data_new_under[,i],
+                             fill = Status)) +
+    geom_density(alpha = 0.2) +
+    xlab(names(data_new_under[i])) +
+    ylab("Density") +
+    theme(text = element_text(size = 40))
+  density_plots[[i]] <- density_plot
+}
+
+grid.arrange(grobs = density_plots, ncol = 3)
 ```
 
 
 
 ***
+
+
+## Associations between the categorical variables and the target feature
+
+> *
+
+```{r fig.width=20, fig.height=20}
+create_category_plots <- function(data, variable) {
+  bar_plot <- ggplot(data, aes(x = factor(!!sym(variable)), fill = Status)) +
+    geom_bar(position = "stack") +
+    labs(title = paste("Barplot of", variable), x = variable, y = "Count") +
+    theme_minimal() +
+    theme(
+      text = element_text(size = 40),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+  return(bar_plot)
+}
+
+category_variables <- colnames(data_new_under)[12:17]
+
+plots_list <- lapply(category_variables, function(variable) {
+  create_category_plots(data_new_under, variable)
+})
+
+grid.arrange(grobs = plots_list, ncol = 3)
+
+```
+
+
+***
+
 
 
 ```{r, echo=FALSE, fig.width=8, fig.height=5}
