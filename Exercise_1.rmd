@@ -516,9 +516,12 @@ The points tend to follow the trend line closely, it indicates a strong linear r
 **Scatter plot for "annual_inc":** 
 <br>
 The points are scattered and don't follow a clear trend, the relationship may be less predictable.
+**Conclusion:**
+<br>
+There's a tendency for one to increase or decrease as the other changes.
 
 
-```{r, echo=FALSE}
+```{r}
 # Scatter plot for loan_amnt
 scatter_loan_amnt <- plot_ly(data_new_under, 
                               x = ~loan_amnt, 
@@ -562,7 +565,12 @@ subplot(scatter_loan_amnt, scatter_annual_inc, nrows = 2)
 
 ***
 
-> In the next step, we carry-out under sampling and visualizate it again. 
+## Balancing the target variables
+
+> In the next step, we carry-out under sampling and visualizate it again.
+<br>
+<br>
+Balancing the data set is necessary to ensure that the model is not influenced by an excessive presence of one class over the other. Models can tend to focus on the dominant class and ignore the minority class if the data set is not balanced. Balancing ensures that both classes are equally represented, which can lead to a more balanced model.
 
 ```{r}
 set.seed(7)
@@ -571,7 +579,7 @@ data_balanced <- ovun.sample(Status ~ ., data=data, method = "under")
 data_under <- data.frame(data_balanced[["data"]])
 ```
 
-```{r, echo=FALSE}
+```{r}
 ggplot(data_under, aes(x = Status, fill = Status)) +
   geom_bar() +
   ylab("Count") +
@@ -579,37 +587,6 @@ ggplot(data_under, aes(x = Status, fill = Status)) +
 ```
 
 
-***
-
-> Visualization of the level of the target variable
-
-```{r, echo=FALSE}
-corr_data <- cor(data[1:11])
-p_value_data <- cor_pmat(data[1:11])
-ggcorrplot(corr_data, type = "lower",
-           p.mat = p_value_data,
-           outline.col = "white",
-           ggtheme = ggplot2::theme_gray,
-           colors = c("tomato2", "white", "skyblue2"),
-           lab = TRUE,
-           title = "Correlation matrix of the unbalanced variables")
-```
-
-```{r, echo=FALSE}
-corr_data_under <- cor(data_under[1:11])
-p_value_data_under <- cor_pmat(data[1:11])
-ggcorrplot(corr_data_under, type = "lower",
-           p.mat = p_value_data_under,
-           outline.col = "white",
-           ggtheme = ggplot2::theme_gray,
-           colors = c("tomato2", "white", "skyblue2"),
-           lab = TRUE, 
-           title = "Correlation matrix of the balanced variables")
-```
-
-***
-
-> Balancing the data set is necessary to ensure that the model is not influenced by an excessive presence of one class over the other. Models can tend to focus on the dominant class and ignore the minority class if the data set is not balanced. Balancing ensures that both classes are equally represented, which can lead to a more balanced model.
 
 
 
@@ -620,6 +597,7 @@ ggcorrplot(corr_data_under, type = "lower",
 ## Exercise 2
 
 ### Training and testing a logistic classifier
+
 ```{r}
 set.seed(7)
 div <- createDataPartition(y = data_new_under$Status, p = 0.7, list = F)
@@ -719,7 +697,7 @@ confusionMatrix(as.factor(round(data.test$fit1_score)), data.test$Status)
 
 #### Explanation:
 
-Confusion Matrix
+> Confusion Matrix
 * It correctly identifies 64.19% of instances (Accuracy) with 62.65% sensitivity (True Positive Rate) and 65.73% specificity (True Negative Rate).
 Kappa Statistic
 * The Kappa value of 0.2838 indicates fair agreement beyond random chance.
@@ -754,7 +732,7 @@ cat("AUC: ",fit1_auc@y.values[[1]]*100)
 
 #### Variables
 
-> Loan utilization ratio:
+> **Loan utilization ratio:**
 <br>
 This ratio could indicate how much of the available loan has already been used.
 
@@ -762,7 +740,7 @@ This ratio could indicate how much of the available loan has already been used.
 summary(data$loan_amnt / data$total_rev_hi_lim)
 ```
 
-> Income to loan ratio:
+> **Income to loan ratio:**
 <br>
 This could indicate how well the borrower is able to repay the loan, based on their income.
 
@@ -770,7 +748,7 @@ This could indicate how well the borrower is able to repay the loan, based on th
 summary(data$annual_inc / data$loan_amnt)
 ```
 
-> Risikokategorien für den Schulden-zu-Einkommen (DTI):
+> **Risk categories for the debt-to-income (DTI):**
 <br>
 A new categorical variable that categorizes debt-to-income (dti) into different risk categories. For example, low, medium and high risk based on certain thresholds.
 
@@ -778,6 +756,36 @@ A new categorical variable that categorizes debt-to-income (dti) into different 
 summary(cut(data$dti, breaks = c(-Inf, 15, 25, Inf), labels = c("Low Risk", "Medium Risk", "High Risk")))
 ```
 
+#### Outliers
+
+> **Removing Outliers:**
+<br>
+Complete removal of outliers can lead to a loss of valuable information. If outliers are influential or carry meaningful insights, removing them might distort the overall understanding of the data.
+<br>
+<br>
+**Data Transformation (e.g., Log Transformation):**
+<br>
+Transforming the entire dataset might not be appropriate if the distribution is heavily skewed. Additionally, transforming the data can make interpretation challenging.
+<br>
+<br>
+**Imputation:**
+<br>
+Imputing outlier values with central tendencies (mean, median) or other imputation methods may introduce bias, especially if outliers are indicative of important patterns or events. It might not accurately represent the true underlying data structure.
+<br>
+<br>
+**Clipping:**
+<br>
+Clipping involves capping extreme values at a predefined threshold. This method can lead to a loss of information, as it essentially treats all extreme values beyond the threshold as identical, ignoring potential differences among them.
+<br>
+<br>
+**Data Binning:**
+<br>
+Binning involves grouping continuous data into discrete intervals. This can lead to information loss and might not be suitable if the goal is to retain the granularity of the data.
+<br>
+<br>
+**Model-based Approaches:**
+<br>
+Ignoring or downplaying the existence of outliers in model-based approaches would have been too weak an intervention.
 
 
 
