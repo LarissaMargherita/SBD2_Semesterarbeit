@@ -16,6 +16,7 @@ df_print: paged
 
 
 
+
 ## Prepare workplace
 
 ```{r include=FALSE, echo=FALSE}
@@ -26,10 +27,10 @@ set.seed(7)
 
 ### Install libraries
 
-```{r}
+```{r echo=2}
 knitr::opts_chunk$set(echo = TRUE)
 
-libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "corrplot", "GGally", "gridExtra","caret", "ROCR")
+libraries = c("readr", "ggplot2", "dlookr", "dplyr", "RColorBrewer", "DescTools", "ROSE", "ggcorrplot", "car", "plotly", "tidyverse", "corrplot", "GGally", "gridExtra","caret", "ROCR", "outliers")
 
 lapply(libraries, function(x) if (!(x %in% installed.packages())) {
   install.packages(x)
@@ -44,7 +45,7 @@ lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 
 > We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset.
 
-```{r}
+```{r include=FALSE}
 data_loans <- read_csv("loan_sample_9.csv")
 data <- data_loans
 ```
@@ -96,9 +97,8 @@ data$purpose = as.factor(data$purpose)
 data$application_type = as.factor(data$application_type)
 data$Status = as.factor(data$Status)
 
-data <- as.data.frame(data)
-
-data <- data[, order(sapply(data, is.factor)), order(sapply(data, is.numeric))]
+data <- data %>%
+  select(order(sapply(., is.factor)),order(sapply(., is.numeric)))
 ```
 
 ```{r}
@@ -120,7 +120,7 @@ The average interest rate "int_rate" is around 12.63%, with values between 5.31%
 <br>
 <br>
 The annual income "annual_inc" of borrowers varies greatly, with an average of around USD 63,277.
-<br>d
+<br>
 There are outliers with very high annual salaries.
 <br>
 <br>
@@ -199,21 +199,21 @@ create_numeric_plots <- function(data, variable) {
     geom_histogram(fill = "#00CED1", color = "white", bins = 30) +
     labs(title = paste("Distribution of", variable), x = variable, y = "Frequency") +
     theme_minimal() +
-    theme(plot.title = element_text(size = 18)) 
+    theme(plot.title = element_text(size = 20)) 
 
   # Boxplot
   box_plot <- ggplot(data, aes(y = !!sym(variable))) +
     geom_boxplot(fill = "#00CED1", color = "black") +
     labs(title = paste("Boxplot of", variable), y = variable) +
     theme_minimal() +
-    theme(plot.title = element_text(size = 18))  
+    theme(plot.title = element_text(size = 20))  
 
   # Kernel Density Plot
   density_plot <- ggplot(data, aes(x = !!sym(variable))) +
     geom_density(fill = "#00CED1", color = "white") +
     labs(title = paste("Kernel Density Plot of", variable), x = variable, y = "Density") +
     theme_minimal() +
-    theme(plot.title = element_text(size = 18)) 
+    theme(plot.title = element_text(size = 20)) 
 
   # List of Plots
   return(list(hist_plot, box_plot, density_plot))
@@ -249,14 +249,28 @@ boxplot(scale(data[,1:11]), use.cols = TRUE)
 
 ***
 
-> The comparison between mean values with and without outliers shows how strongly the outliers influence the average values in most variables.
-<br>
-NaN in revol_util could mean that all values of this variable were considered outliers or could be missing values. As we have already checked the variables for NA values, we can rule out the possibility that these are missing values. The distribution of this variable is very different from the other variables. The calculation of the average of the outliers could cause difficulties due to certain characteristics of the distribution, as no clear upper and lower limit for outliers can be defined.
+#### Analysis of outliers
+
+> * The variable "loan_amnt" has a moderate number of outliers, which could indicate that there are loans with unusually high amounts.
+* The variable "int_rate" shows some outliers with higher interest rates, which may indicate special loan conditions.
+* The variable "annual_inc" shows some outliers with very high annual salaries, which could indicate individuals with exceptionally high incomes.
+* The variable "dti" shows only a few outliers, which could indicate unusually high debt-to-income ratios for some applicants.
+* The variable "open_acc" shows some outliers, which could indicate borrowers with an unusually high number of open credit accounts.
+* The variable "revol_bal" shows many outliers with high revolving balance amounts, which could indicate borrowers with large credit card balances.
+* The variable "revol_util" has only one outlier. This outlier could indicate an unusually high revolving utilization rate for a borrower.
+* The variable "total_acc" shows some outliers, which could indicate borrowers with an unusually large number of total credit accounts.
+* The variable "total_rec_int" has many outliers with high total interest payments, which could indicate special loan conditions or exceptionally high interest rates, as we have already seen with the variable "int_rate".
+* The variable "tot_cur_bal" shows some outliers with high total balances, which could indicate borrowers with significant loan account balances.
+* The variable "total_rev_hi_lim" shows many outliers with high total credit limits, which could indicate borrowers with large credit limits.
+
 
 ```{r}
-knitr::kable(diagnose_outlier(data_under), caption = "Diagnose Outlier", digits = 2)
+knitr::kable(diagnose_outlier(data), caption = "Diagnose Outlier", digits = 2)
 ```
 ***
+
+
+
 
 
 #### Visualzation with and without the outliers. 
@@ -268,8 +282,8 @@ The distribution of the variable "loan_amnt" would fluctuate somewhat more.
 The other variables would not change much.
 
 ```{r, echo=FALSE}
-data_under %>%
-  plot_outlier(diagnose_outlier(data_under) %>%
+data %>%
+  plot_outlier(diagnose_outlier(data) %>%
                  filter(outliers_ratio >= 0.5) %>%          # dplyr
                  select(variables) %>%
                  unlist())
@@ -283,41 +297,20 @@ data_under %>%
 
 #### Dealing with outliers 
 
-```{r}
-# Liste für robuste Modelle
-robust_models <- list()
 
-# Entferne Zeilen mit fehlenden Werten in der Zielvariablen
-data <- na.omit(data)
-data$Status <- as.numeric(as.character(data$Status))
-
-# Iteriere über jede numerische Variable
-for (variable in numeric_variables) {
-  # Erstelle robustes Modell
-  robust_model <- rlm(Status ~ get(variable), data = data)
-  
-  # Speichere das Modell in der Liste
-  robust_models[[variable]] <- robust_model
-  
-  # Zeige die Zusammenfassung
-  cat("Robustes Modell für", variable, ":\n")
-  print(summary(robust_model))
-  cat("\n")
-}
-```
-
-> We do Interquartil Range (IQR) methode for dealing with the highest outliers.
+> The decision to use the winsorizing method was made to improve the robustness of the data and to minimize possible biases due to extremely high or low values in the target variable. The specific code section uses the quantile method to calculate the bounds for winsorizing.
 
 ```{r}
-outlier <- function(x){
-    quantiles <- quantile(x, c(.05, .95))
-    x[x < quantiles[1]] <- quantiles[1]
-    x[x > quantiles[2]] <- quantiles[2]
-    x
+outlier <- function(x, trim = 0.05) {
+  q <- quantile(x, c(trim, 1 - trim), na.rm = TRUE)
+  x[x < q[1]] <- q[1]
+  x[x > q[2]] <- q[2]
+  return(x)
 }
 
-data_new_under <- map_df(data_under[,-c(12:17)], outlier)
-cols <- data_under[,c(12:17)]
+
+data_new_under <- map_df(data[,-c(12:17)], outlier)
+cols <- data[,c(12:17)]
 data_new_under <- cbind(data_new_under, cols)
 ```
 
@@ -325,6 +318,21 @@ data_new_under <- cbind(data_new_under, cols)
 boxplot(scale(data_new_under[,c(1:11)]), use.cols = TRUE)
 ```
 ***
+
+> Almost none of the variables still show outliers after adjustment. 
+<br>
+Only the variable "total_rec_int" still shows a high total interest payment, which could indicate special credit conditions or exceptionally high interest rates.
+<br> 
+We therefore assume that this corresponds to the representable truth and will not be processed further.
+
+```{r}
+knitr::kable(diagnose_outlier(data_new_under), caption = "Diagnose Outlier", digits = 2)
+```
+***
+
+
+
+
 
 
 ```{r, echo=FALSE}
