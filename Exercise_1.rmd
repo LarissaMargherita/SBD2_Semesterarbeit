@@ -96,8 +96,9 @@ data$purpose = as.factor(data$purpose)
 data$application_type = as.factor(data$application_type)
 data$Status = as.factor(data$Status)
 
-data <- data %>%
-  select(order(sapply(., is.factor)),order(sapply(., is.numeric)))
+data <- as.data.frame(data)
+
+data <- data[, order(sapply(data, is.factor)), order(sapply(data, is.numeric))]
 ```
 
 ```{r}
@@ -198,21 +199,21 @@ create_numeric_plots <- function(data, variable) {
     geom_histogram(fill = "#00CED1", color = "white", bins = 30) +
     labs(title = paste("Distribution of", variable), x = variable, y = "Frequency") +
     theme_minimal() +
-    theme(plot.title = element_text(size = 40)) 
+    theme(plot.title = element_text(size = 18)) 
 
   # Boxplot
   box_plot <- ggplot(data, aes(y = !!sym(variable))) +
     geom_boxplot(fill = "#00CED1", color = "black") +
     labs(title = paste("Boxplot of", variable), y = variable) +
     theme_minimal() +
-    theme(plot.title = element_text(size = 40))  
+    theme(plot.title = element_text(size = 18))  
 
   # Kernel Density Plot
   density_plot <- ggplot(data, aes(x = !!sym(variable))) +
     geom_density(fill = "#00CED1", color = "white") +
     labs(title = paste("Kernel Density Plot of", variable), x = variable, y = "Density") +
     theme_minimal() +
-    theme(plot.title = element_text(size = 40)) 
+    theme(plot.title = element_text(size = 18)) 
 
   # List of Plots
   return(list(hist_plot, box_plot, density_plot))
@@ -281,6 +282,29 @@ data_under %>%
 
 
 #### Dealing with outliers 
+
+```{r}
+# Liste für robuste Modelle
+robust_models <- list()
+
+# Entferne Zeilen mit fehlenden Werten in der Zielvariablen
+data <- na.omit(data)
+data$Status <- as.numeric(as.character(data$Status))
+
+# Iteriere über jede numerische Variable
+for (variable in numeric_variables) {
+  # Erstelle robustes Modell
+  robust_model <- rlm(Status ~ get(variable), data = data)
+  
+  # Speichere das Modell in der Liste
+  robust_models[[variable]] <- robust_model
+  
+  # Zeige die Zusammenfassung
+  cat("Robustes Modell für", variable, ":\n")
+  print(summary(robust_model))
+  cat("\n")
+}
+```
 
 > We do Interquartil Range (IQR) methode for dealing with the highest outliers.
 
