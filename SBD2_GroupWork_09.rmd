@@ -1,27 +1,31 @@
 ---
-title: "SBD2_loan_sample_09"
+title: "SBD2 Group Work - loan sample 09"
 author: "Ambrosioni Hélène, Sivakolunthu Nerome, Kuster Dario, Pagliarin Larissa"
-date: '2023'
+date: '11-12-2023'
 output: html_document
 df_print: paged
 ---
+
+
+<br>
+<br>
+
 
 # Inroduction
 
 > The following document provides an overview and analysis of a loan decision model developed by Ambrosioni Hélène, Sivakolunthu Nerome, Kuster Dario, and Pagliarin Larissa, specifically focusing on thr exploration, preprocessing, model training, and ethical considerations.
 
-## Exploration and Preprocessing
-
-> The initial steps involve data exploration and preprocessing to understand the structure and characteristics of the dataset.
-
-## Descriptive Analysis
- 
-> 
 
 
 ***
 
 
+
+<br>
+<br>
+
+
+# Exercise 1
 
 
 ## Prepare workplace
@@ -48,6 +52,14 @@ lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 
 
 
+
+
+
+<br>
+<br>
+
+
+
 ### Read data
 
 > We import the csv file "loan_sample_9.csv" and make a copy of it to ensure that we don't mess up the original dataset.
@@ -56,7 +68,16 @@ lapply(libraries, library, quietly = TRUE, character.only = TRUE)
 data_loans <- read_csv("loan_sample_9.csv")
 data <- data_loans
 ```
+
+
+
 ***
+
+
+
+<br>
+
+
 
 ## Descriptive analysis 
 
@@ -70,7 +91,15 @@ head(data)
 tail(data)
 str(data)
 ```
+
+
+
 ***
+
+
+<br>
+
+
 
 ### Data quality issues - Checking for NAs
 
@@ -80,7 +109,18 @@ There are no NAs values in this dataset.
 ```{r}
 knitr::kable(apply(data, 2, function(x) any(is.na(x))))
 ```
+
+
+
+
 ***
+
+
+
+
+<br>
+
+
 
 ### What data types are included in the data set?
 
@@ -90,7 +130,20 @@ knitr::kable(apply(data, 2, function(x) any(is.na(x))))
 overview <- overview(data)
 plot(overview)
 ```
+
+
+
+
+
 ***
+
+
+
+<br>
+
+
+
+
 
 ### Transform some variables
 
@@ -112,7 +165,18 @@ data <- data %>%
 overview <- overview(data)
 plot(overview)
 ```
+
+
+
+
 ***
+
+
+
+<br>
+
+
+
 
 ### Summary of variables
 
@@ -167,7 +231,18 @@ There are borrowers with a dti of 0, which could indicate low indebtedness.
 ```{r}
 summary(data)
 ```
+
+
+
+
 ***
+
+
+
+<br>
+
+
+
 
 ## Balance of the target variable  
 
@@ -186,7 +261,16 @@ ggplot(data, aes(x = Status, fill = Status)) +
 ```{r}
 PercTable(data$Status)
 ```
+
+
+
 ***
+
+
+
+
+<br>
+
 
 
 ## Distribution of the numeric variable
@@ -241,7 +325,13 @@ for (variable in numeric_variables) {
 ***
 
 
-## Cheking for outliers 
+
+<br>
+
+
+
+
+## Cheking for outliers
 
 > Here we see the box plots next to each other on one visualization. 
 <br>
@@ -255,6 +345,13 @@ boxplot(scale(data[,1:11]), use.cols = TRUE)
 
 
 ***
+
+
+
+
+
+<br>
+
 
 ### Analysis of outliers
 
@@ -274,8 +371,14 @@ boxplot(scale(data[,1:11]), use.cols = TRUE)
 ```{r}
 knitr::kable(diagnose_outlier(data), caption = "Diagnose Outlier", digits = 2)
 ```
+
+
+
 ***
 
+
+
+<br>
 
 
 
@@ -302,6 +405,10 @@ data %>%
 
 
 
+<br>
+
+
+
 ### Dealing with outliers 
 
 
@@ -324,7 +431,16 @@ data_new_under <- cbind(data_new_under, cols)
 ```{r, fig.width=20, fig.height=20}
 boxplot(scale(data_new_under[,c(1:11)]), use.cols = TRUE)
 ```
+
+
+
+
 ***
+
+
+<br>
+
+
 
 > Almost none of the variables still show outliers after adjustment. 
 <br>
@@ -335,7 +451,16 @@ We therefore assume that this corresponds to the representable truth and will no
 ```{r}
 knitr::kable(diagnose_outlier(data_new_under), caption = "Diagnose Outlier", digits = 2)
 ```
+
+
+
+
 ***
+
+
+<br>
+
+
 
 
 ## Compare "Default" and "Non-Default" groups
@@ -375,6 +500,10 @@ for (variable in names(data_new_under[, -c(12:17)])) {
 
 knitr::kable(summary_data, caption = "Default and Non-Default Groups", digits = 2)
 ```
+
+
+<br>
+
 
 
 ### Visualization
@@ -417,6 +546,12 @@ grid.arrange(grobs = density_plots, ncol = 3)
 ***
 
 
+
+<br>
+
+
+
+
 ## Associations between the categorical variables and the target feature
 
 > * **"grade":** the "non-default" values are highest in category B and the highest "default" values are only slightly higher in category D.
@@ -450,7 +585,14 @@ grid.arrange(grobs = plots_list, ncol = 3)
 ```
 
 
+
+
 ***
+
+
+<br>
+
+
 
 
 
@@ -458,9 +600,11 @@ grid.arrange(grobs = plots_list, ncol = 3)
 
 > **Strong positive correlations:**
 <br>
-* Variables "loan_amnt" and "total_rec_int" have a strong positive correlation of 0.69.
-* Variables "revol_bal" and "total_rev_hi_lim" also have a strong positive correlation of 0.7.
-* Variables "total_acc" and "open_acc" have a strong positive correlation of 0.63.
+- Variables "loan_amnt" and "total_rec_int" have a strong positive correlation of 0.69.
+<br>
+- Variables "revol_bal" and "total_rev_hi_lim" also have a strong positive correlation of 0.7.
+<br>
+- Variables "total_acc" and "open_acc" have a strong positive correlation of 0.63.
 <br>
 <br>
 **"loan_amnt" and "total_rec_int"**
@@ -506,71 +650,40 @@ corrplot(correlations, order= "FPC", col = COL2(n=20))
 ***
 
 
-### Association between the loan amount requested and the annual income of the borrower
+<br>
 
-> **Color Coding:** 
-<br>
-Light blue points represent Loan Amount, and blue points represent Annual Income.
-<br> 
-<br>
-**Scatter plot for "loan_amnt":** 
-<br>
-The red line on the plot is a regression line (trend line) between Loan Amount and Annual Income. It looks like a straight line, suggesting a linear relationship.
-<br>
-The points tend to follow the trend line closely, it indicates a strong linear relationship.
-<br>
-<br>
-**Scatter plot for "annual_inc":** 
+
+
+## Association between the loan amount requested and the annual income of the borrower
+
+> The red line on the plot is a regression line (trend line) between Loan Amount and Annual Income and is in a positive relationship.
 <br>
 The points are scattered and don't follow a clear trend, the relationship may be less predictable.
-**Conclusion:**
 <br>
-There's a tendency for one to increase or decrease as the other changes.
+The corraltion ist 0.379, there's a tendency for one to increase or decrease as the other changes.
 
 
 ```{r}
-# Scatter plot for loan_amnt
-scatter_loan_amnt <- plot_ly(data_new_under, 
-                              x = ~loan_amnt, 
-                              y = ~annual_inc, 
-                              mode = "markers",
-                              type = "scatter", 
-                              marker = list(color = "#00CED1", size = 8, opacity = 0.7),
-                              showlegend = FALSE) %>%
-  add_trace(x = ~loan_amnt, 
-            y = ~fitted(lm(annual_inc ~ loan_amnt)),
-            mode = "lines",
-            type = "scatter",
-            line = list(color = "#e74c3c"),
-            hoverinfo = "none") %>%
-  layout(title = "Scatter Plot of Loan Amount vs. Annual Income",
-         xaxis = list(title = "Loan Amount"),
-         yaxis = list(title = "Annual Income"))
+corr_LA <- cor(data_new_under$loan_amnt, data_new_under$annual_inc)
 
-# Scatter plot for annual_inc
-scatter_annual_inc <- plot_ly(data_new_under, 
-                              x = ~annual_inc, 
-                              y = ~loan_amnt, 
-                              mode = "markers",
-                              type = "scatter", 
-                              marker = list(color = "#3498db", size = 8, opacity = 0.7),
-                              showlegend = FALSE) %>%
-  add_trace(x = ~annual_inc, 
-            y = ~fitted(lm(loan_amnt ~ annual_inc)),
-            mode = "lines",
-            type = "scatter",
-            line = list(color = "#e74c3c"),
-            hoverinfo = "none") %>%
-  layout(xaxis = list(title = "Annual Income"),
-         yaxis = list(title = "Loan Amount"))
+p1 <- ggplot(data = data_new_under, aes(x = loan_amnt, y = annual_inc)) +
+  geom_point(color = "#3498db", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "#e74c3c", size = 1.5) +
+  labs(title = paste("Scatter Plot of Loan Amount vs. Annual Income", round(corr_LA, 2)),
+       x = "Loan Amount",
+       y = "Annual Income") +
+  theme_minimal() 
 
-# Combine the plots using subplot
-subplot(scatter_loan_amnt, scatter_annual_inc, nrows = 2)
-
+p1 <- ggplotly(p1, tooltip = c("x", "y"))
+p1
 ```
 
 
 ***
+
+<br>
+
+
 
 ## Balancing the target variables
 
@@ -601,26 +714,39 @@ ggplot(data_under, aes(x = Status, fill = Status)) +
 
 
 
-## Exercise 2
+<br>
+<br>
 
-### Training and testing a logistic classifier
+
+
+
+# Exercise 2
+
+## Training and testing a logistic classifier
 
 ```{r}
 set.seed(7)
-div <- createDataPartition(y = data_new_under$Status, p = 0.7, list = F)
+div <- createDataPartition(y = data_under$Status, p = 0.7, list = F)
 
 # Training Sample
-data.train <- data_new_under[div,] # 70% here
+data.train <- data_under[div,] # 70% here
 
 # Test Sample
-data.test <- data_new_under[-div,] # rest of the 30% data goes here
+data.test <- data_under[-div,] # rest of the 30% data goes here
 ```
+
+
 
 
 ***
 
 
-### Training the classifier
+
+<br>
+
+
+
+## Training the classifier
 
 ```{r}
 fit1 <- glm(Status ~ ., data=data.train,family=binomial())
@@ -631,36 +757,47 @@ summary(fit1)
 ***
 
 
-#### Explanation:
+### Explanation:
 
 > From the results obtained, we can deduce the following points.
 <br>
 <br>
 **Deviance residuals:**
-* The moderate range of deviance residuals (-2.08 to 2.10) suggests a reasonable fit to the model. Smaller residuals would indicate a more precise fit, but these values are acceptable.
+<br>
+The moderate range of deviance residuals (-2.08 to 2.10) suggests a reasonable fit to the model. Smaller residuals would indicate a more precise fit, but these values are acceptable.
 <br>
 <br>
 **Coefficients:**
-* Positive coefficients for "loan_amnt" and "int_rate" indicate that higher loan amounts and interest rates are associated with a higher probability of belonging to the positive class.
+<br>
+Positive coefficients for "loan_amnt" and "int_rate" indicate that higher loan amounts and interest rates are associated with a higher probability of belonging to the positive class.
 <br>
 <br>
 **Significance:**
-* Statistically significant predictors include "loan_amnt," "int_rate," "annual_inc," "total_rec_int," "gradeB," and "gradeC," crucial characteristics that influence the model.
+<br>
+Statistically significant predictors include "loan_amnt," "int_rate," "annual_inc," "total_rec_int," "gradeB," and "gradeC," crucial characteristics that influence the model.
 Zero and residual deviance:
 * The reduction of deviance from null model 10103.3 to residual deviance 9254.7 suggests that the model, explains some of the variability of the response variable.
 <br>
 <br>
 **AIC:**
-* The AIC value of 9318.7 is an indicator of model fit and complexity. Although it could be lower, the AIC is still a reasonable value considering the number of predictors.
+<br>
+The AIC value of 9318.7 is an indicator of model fit and complexity. Although it could be lower, the AIC is still a reasonable value considering the number of predictors.
 <br>
 Conduct cross-validation to ensure generalizability of the model.
 In summary, the model shows promise with significant predictors, but there is room for improvement. Further analysis and refinement can improve its predictive capabilities and overall performance.
 
 
+
 ***
 
 
-### Plotting the ROC Curve
+
+<br>
+
+
+
+
+## Plotting the ROC Curve
 
 ```{r}
 data.test$fit1_score <- predict(fit1,type='response',data.test)
@@ -676,7 +813,7 @@ lines(x=c(0, 1), y=c(0, 1), col="black", lwd=1, lty=3)
 
 
 
-#### Explanation
+### Explanation
 
 >Through the ROC (Receiver Operating Characteristic) curve, we can evaluate the performance of the classification algorithm.
 There are several aspects that we can identify and comment on.
@@ -688,11 +825,17 @@ On the right we have the color scale which represents the threshold at which the
 In our case the curve appears to be well above the diagonal, indicating a better classifier than a random guess. The color scale can be useful to see how thresholds affect evaluation metrics.
 
 
+
+
 ***
 
 
 
-### visualizing the Precision/Recall Curve
+<br>
+
+
+
+## Visualizing the Precision/Recall Curve
 
 ```{r}
 fit1_precision <- performance(fit1_pred, measure = "prec", x.measure = "rec")
@@ -704,7 +847,7 @@ plot(fit1_precision, main="Fit1: Logit - Precision vs Recall")
 ***
 
 
-#### Explanation:
+### Explanation:
 
 > With the precision recall curve we can evaluate the classification model used and understand whether the classes are unequally distributed or not.
 <br>
@@ -721,11 +864,15 @@ In this case, precision starts to be high when recall is low. This means that th
 Since the curve is directed upwards in the right corner, it can be deduced that there is high precision and recall.
 
 
+
 ***
 
 
+<br>
 
-### Confusion Matrix
+
+
+## Confusion Matrix
 
 ```{r}
 confusionMatrix(as.factor(round(data.test$fit1_score)), data.test$Status)
@@ -737,27 +884,47 @@ confusionMatrix(as.factor(round(data.test$fit1_score)), data.test$Status)
 
 
 
-#### Explanation:
+### Explanation:
 
 > **Confusion Matrix**
 <br>
-* It correctly identifies 64.19% of instances (Accuracy) with 62.65% sensitivity (True Positive Rate) and 65.73% specificity (True Negative Rate).
-Kappa Statistic
-* The Kappa value of 0.2838 indicates fair agreement beyond random chance.
-Positive Predictive Value (Precision):
-* Precision is at 64.64%, meaning that when the model predicts the positive class, it is correct 64.64% of the time.
-Balanced Accuracy:
-* The balanced accuracy is 64.19%, reflecting a balance between sensitivity and specificity.
-Prevalence and Detection Rate:
-* The prevalence of the positive class is 50%, and the model detects it in 31.33% of cases.
-Mcnemar's Test
-* McNemar's test does not show a significant difference in errors between predictions.
+It correctly identifies 64.13% of instances (Accuracy) with 63.10% sensitivity (True Positive Rate) and 65.15% specificity (True Negative Rate).
+<br>
+<br>
+**Kappa Statistic**
+<br>
+The Kappa value of 0.2825 indicates fair agreement beyond random chance.
+<br>
+<br>
+**Positive Predictive Value (Precision):**
+Precision is at 64.42%, meaning that when the model predicts the positive class, it is correct 64.42% of the time.
+<br>
+<br>
+**Balanced Accuracy:**
+The balanced accuracy is 64.13%, reflecting a balance between sensitivity and specificity.
+<br>
+<br>
+**Prevalence and Detection Rate:**
+<br>
+The prevalence of the positive class is 50%, and the model detects it in 31.55% of cases.
+<br>
+<br>
+**Mcnemar's Test**
+<br>
+McNemar's test does not show a significant difference in errors between predictions.
 In conclusion, the model demonstrates moderate performance, but there is room for improvement.
+
 
 
 ***
 
-### Computing the predictive utility of the model through the area under the curve AUC value
+
+<br>
+<br>
+
+
+
+## Computing the predictive utility of the model through the area under the curve AUC value
 
 ```{r}
 fit1_auc <- performance(fit1_pred, measure = "auc")
@@ -770,9 +937,11 @@ cat("AUC: ",fit1_auc@y.values[[1]]*100)
 
 
 
-#### Explanation:
+### Explanation:
 
 > The AUC-Value of 70.46687 falls in to the fair discrimination range. While it suggests some ability of our model to distinguish between the two classes, there is definelty room for improvement. It could be valuable to compare our AUC-Value to that of other models to gain further context regarding our model's performance.
+
+
 
 
 ***
@@ -780,11 +949,16 @@ cat("AUC: ",fit1_auc@y.values[[1]]*100)
 
 
 
-## Exercise 3
+<br>
+<br>
 
-### Improve pre-processing of data
 
-#### Variables
+
+# Exercise 3
+
+## Improve pre-processing of data
+
+### Variables
 
 > **Loan utilization ratio:**
 <br>
@@ -825,8 +999,10 @@ summary(cut(data$dti, breaks = c(-Inf, 15, 25, Inf), labels = c("Low Risk", "Med
 ***
 
 
+<br>
 
-#### Outliers
+
+### Outliers
 
 > **Removing Outliers:**
 <br>
@@ -863,11 +1039,14 @@ Ignoring or downplaying the existence of outliers in model-based approaches woul
 
 
 
+<br>
+<br>
 
 
-## Exercise 4
 
-### Question 1
+# Exercise 4
+
+## Question 1
 
 > What challenges in making credit decisions would a company face if it were to use our model in its day-to-day business?
 <br>
@@ -876,21 +1055,21 @@ These challenges are captured in the four common ethical issues in the context o
 <br>
 **Privacy and data security**
 <br>
-* Collecting and using various financial and personal variables (e.g., "loan_amnt", "int_rate", "annual_inc") for credit decisions requires a strong privacy framework for used customer data. Ensuring encryption, secure storage and compliance with privacy regulations are critical, considering the sensitive nature of financial information.
+Collecting and using various financial and personal variables (e.g., "loan_amnt", "int_rate", "annual_inc") for credit decisions requires a strong privacy framework for used customer data. Ensuring encryption, secure storage and compliance with privacy regulations are critical, considering the sensitive nature of financial information.
 <br>
 <br>
 **Algorithmic bias and fairness**
 <br>
-* The model coefficients reveal that some variables, such as “grade B” and “grade C”, have a significant impact on the predictions. It is essential to carefully examine these variables for possible biases, ensuring that credit decisions are fair and impartial across different grades and demographic groups.
+The model coefficients reveal that some variables, such as “grade B” and “grade C”, have a significant impact on the predictions. It is essential to carefully examine these variables for possible biases, ensuring that credit decisions are fair and impartial across different grades and demographic groups.
 <br>
 <br>
 **Accountability and Accountability**
 <br>
-* Model performance parameters, including accuracy and sensitivity, provide a basis for evaluating its effectiveness. Establishing accountability for model results is critical, especially with significant predictors like “loan_amnt” and “int_rate.” Transparent communication about how decisions are made is essential for accountability.
+Model performance parameters, including accuracy and sensitivity, provide a basis for evaluating its effectiveness. Establishing accountability for model results is critical, especially with significant predictors like “loan_amnt” and “int_rate.” Transparent communication about how decisions are made is essential for accountability.
 <br>
 <br>
 **Impact on the workforce**
-* Implementing the credit decision model may impact the workforce involved in manual credit assessments. Workforce implications, including potential job role changes, should be considered. Ethical considerations involve transparent communication about these changes and efforts to mitigate any negative impacts on the workforce.
+Implementing the credit decision model may impact the workforce involved in manual credit assessments. Workforce implications, including potential job role changes, should be considered. Ethical considerations involve transparent communication about these changes and efforts to mitigate any negative impacts on the workforce.
 <br>
 <br>
 In conclusion, while the logistic regression model shows promise in predicting credit decisions, addressing ethical issues requires a comprehensive approach. Ensure rigorous data privacy measures, continually evaluate and mitigate algorithmic bias, establish accountability for model results, and consider social impact on the workforce. Engaging in ongoing ethical discussions and staying attuned to the implications of model decisions will contribute to responsible and ethical implementation in daily business operations.
@@ -899,7 +1078,11 @@ In conclusion, while the logistic regression model shows promise in predicting c
 ***
 
 
-### Question 2
+<br>
+
+
+
+## Question 2
 
 > Companies can overcome or mitigate the problems and difficulties described above associated with implementing predictive models, particularly in credit decision making
 In the following way: 
@@ -907,27 +1090,27 @@ In the following way:
 <br>
 **Data Privacy & Security:** Implement Robust Security Measures
 <br>
-* Employ encryption and secure storage protocols to protect sensitive data.
+Employ encryption and secure storage protocols to protect sensitive data.
 Adopt anonymization and aggregation techniques to minimize the exposure of individual details.
 Ensure compliance with data protection regulations and obtain explicit consent from individuals for data usage.
 <br>
 <br>
 **Algorithmic Bias & Fairness:** Continuous Monitoring and Fairness Audits
 <br>
-* Regularly monitor and assess model predictions for biases.
+Regularly monitor and assess model predictions for biases.
 Conduct fairness audits, particularly focusing on variables with significant impact.
 Adjust the model as needed to ensure fairness across different demographic groups.
 <br>
 <br>
 **Accountability & Responsibility:** Establish Clear Accountability and Transparency
 <br>
-*Clearly define roles and responsibilities for individuals involved in model development and deployment.
+Clearly define roles and responsibilities for individuals involved in model development and deployment.
 Maintain transparent documentation of the model's decision-making process.
 Establish mechanisms for accountability and redress in case of errors or unintended consequences.
 <br>
 <br>
-Impact on the Workforce: Responsible Workforce Management
-* Provide training and upskilling opportunities for employees affected by automation.
+**Impact on the Workforce:** Responsible Workforce Management
+Provide training and upskilling opportunities for employees affected by automation.
 Communicate transparently about changes in job roles or responsibilities.
 Consider the societal impact and contribute to initiatives that support workforce development in the face of technological advancements.
 <br>
